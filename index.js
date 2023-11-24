@@ -60,9 +60,17 @@ async function run() {
         app.post("/v1/usersSurveyInfo", async (req, res) => {
             const surveysInfo = req.body;
             console.log(surveysInfo);
-            // const result = await surveyCollection.insertOne(surveys)
+            const id = surveysInfo.usersid
+            const query = { usersid: id }
+
+
+            const existUser = await usersSurveyInfoCollection.findOne(query)
+            if (existUser) {
+                return res.send({ message: "user already exists", insertedId: null })
+            }
+            const result = await usersSurveyInfoCollection.insertOne(surveysInfo)
             // const timestamp = new Date()
-            // res.send(result)
+            res.send(result)
         })
         // post api for suveys
 
