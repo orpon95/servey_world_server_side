@@ -34,13 +34,43 @@ async function run() {
         // database creation and collection
         const database = client.db("surveyDB");
         const surveyCollection = database.collection("survey");
+        const UsersCollection = database.collection("Users");
+        const usersSurveyInfoCollection = database.collection("usersSurveyInfo");
 
+        // post api for storing user info
+
+        app.post("/v1/users", async (req, res) => {
+            const users = req.body;
+            console.log(users);
+
+            const email = users.email
+            const query = { email: email }
+
+
+            const existUser = await UsersCollection.findOne(query)
+            if (existUser) {
+                return res.send({ message: "user already exists", insertedId: null })
+            }
+            // const timestamp = new Date()
+            const result = await UsersCollection.insertOne(users)
+            res.send(result)
+        })
+        // post api storing users survey info
+
+        app.post("/v1/usersSurveyInfo", async (req, res) => {
+            const surveysInfo = req.body;
+            console.log(surveysInfo);
+            // const result = await surveyCollection.insertOne(surveys)
+            // const timestamp = new Date()
+            // res.send(result)
+        })
         // post api for suveys
 
         app.post("/v1/surveys", async (req, res) => {
             const surveys = req.body;
             console.log(surveys);
             const result = await surveyCollection.insertOne(surveys)
+            // const timestamp = new Date()
             res.send(result)
         })
         // get api for getting all data from surveys collection
