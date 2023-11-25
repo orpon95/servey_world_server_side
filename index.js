@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 require('dotenv').config()
 const port = process.env.PORT || 5000;
@@ -55,6 +55,22 @@ async function run() {
             const result = await UsersCollection.insertOne(users)
             res.send(result)
         })
+         // get api for getting all user info
+         app.get("/v1/users", async (req, res) => {
+            const cursor = UsersCollection.find()
+            const result = await cursor.toArray()
+            res.send(result)
+
+        })
+
+        // delte api from usercollection
+        app.delete("/v1/users/:id", async (req, res) => {
+            const id = req.params.id
+            console.log("pls delte ", id)
+            const query = { _id: new ObjectId(id) }
+            const result = await UsersCollection.deleteOne(query)
+            res.send(result)
+        })
         // post api storing users survey info
 
         app.post("/v1/usersSurveyInfo", async (req, res) => {
@@ -72,6 +88,20 @@ async function run() {
             // const timestamp = new Date()
             res.send(result)
         })
+
+        // get api for getting all data from usersurveysinfo collection
+        app.get("/v1/usersSurveyInfo", async (req, res) => {
+            const cursor = usersSurveyInfoCollection.find()
+            const result = await cursor.toArray()
+            res.send(result)
+
+        })
+
+
+
+
+
+
         // post api for suveys
 
         app.post("/v1/surveys", async (req, res) => {
