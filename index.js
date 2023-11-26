@@ -76,15 +76,15 @@ async function run() {
         app.patch("/v1/usersRole/:id", async (req, res) => {
 
             const id = req.params.id;
-            // console.log(id);
+            console.log("surveyorid",id);
             const filter = { _id: new ObjectId(id) }
             // const options = {upsert:true}
             const updatedData = req.body
-            // console.log("in patch",updatedData);
+            console.log("in patch surv",updatedData);
 
             // get
             const existUser = await UsersCollection.findOne(filter)
-            if (existUser.role === "admin") {
+            if (existUser.role === "admin" || existUser.role === "surveyor" ) {
                 return res.send({ message: "user already exists", modifiedCount: null })
             }
             const setUpdatedData = {
@@ -145,6 +145,35 @@ async function run() {
             res.send(result)
 
         })
+        // pathch in survey coollection for unpulish user
+        app.patch("/v1/unpublishSurvey/:id", async (req, res) => {
+
+            const id = req.params.id;
+            console.log(id);
+            const filter = { _id: new ObjectId(id) }
+            // const options = {upsert:true}
+            const updatedData = req.body
+            console.log("in patch of unpublish",updatedData);
+
+            // get
+            const existUser = await surveyCollection.findOne(filter)
+            if (existUser.status === "unpublish") {
+                return res.send({ message: "user already exists", modifiedCount: null })
+            }
+            const setUpdatedData = {
+                $set: {
+                    status: updatedData.status
+                    // feedback: updatedData.feedback,
+
+                }
+            }
+
+
+            const result = await surveyCollection.updateOne(filter, setUpdatedData)
+            res.send(result)
+            // console.log(updatedData);
+        })
+
 
 
         // Send a ping to confirm a successful connection
