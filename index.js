@@ -55,8 +55,8 @@ async function run() {
             const result = await UsersCollection.insertOne(users)
             res.send(result)
         })
-         // get api for getting all user info
-         app.get("/v1/users", async (req, res) => {
+        // get api for getting all user info
+        app.get("/v1/users", async (req, res) => {
             const cursor = UsersCollection.find()
             const result = await cursor.toArray()
             res.send(result)
@@ -70,6 +70,33 @@ async function run() {
             const query = { _id: new ObjectId(id) }
             const result = await UsersCollection.deleteOne(query)
             res.send(result)
+        })
+
+        // patch api update data in usercollection
+        app.patch("/v1/usersRole/:id", async (req, res) => {
+
+            const id = req.params.id;
+            // console.log(id);
+            const filter = { _id: new ObjectId(id) }
+            // const options = {upsert:true}
+            const updatedData = req.body
+            // console.log("in patch",updatedData);
+
+            // get
+            const existUser = await UsersCollection.findOne(filter)
+            if (existUser.role === "admin") {
+                return res.send({ message: "user already exists", modifiedCount: null })
+            }
+            const setUpdatedData = {
+                $set: {
+                    role: updatedData.role
+                }
+            }
+
+
+            const result = await UsersCollection.updateOne(filter, setUpdatedData)
+            res.send(result)
+            // console.log(updatedData);
         })
         // post api storing users survey info
 
