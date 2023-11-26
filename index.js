@@ -84,6 +84,18 @@ async function run() {
 
         }
 
+        // verify surveyor
+        const verifySurveyor = async (req, res, next) => {
+            const email = req.decoded.email
+            const query = { email: email }
+            const user = await UsersCollection.findOne(query)
+            const Surveyor = user?.role === "surveyor"
+            if (!Surveyor) {
+                return res.status(403).send({ message: "forbidden access" })
+
+            }
+            next()
+        }
         // verify admin
         const verifyAdmin = async (req, res, next) => {
             const email = req.decoded.email
@@ -118,6 +130,25 @@ async function run() {
             // res.send(result)
 
         })
+        // surveyor check
+        app.get("/v1/users/surveyor/:email", verifytoken, async (req, res) => {
+            // console.log("token in get alluser", req.headers);
+            const email = req.params.email
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ message: "forbidden access" })
+            }
+            const query = { email: email }
+            const user = await UsersCollection.findOne(query)
+            let surveyor = false
+            if (user) {
+                surveyor = user.role === "surveyor"
+            }
+            res.send({ surveyor })
+            // const cursor = UsersCollection.find()
+            // const result = await cursor.toArray()
+            // res.send(result)
+
+        })
 
         // post api for storing user info
 
@@ -147,7 +178,7 @@ async function run() {
         })
 
         // delte api from usercollection
-        app.delete("/v1/users/:id", async (req, res) => {
+        app.delete("/v1/users/:id",verifyAdmin, async (req, res) => {
             const id = req.params.id
             console.log("pls delte ", id)
             const query = { _id: new ObjectId(id) }
@@ -156,7 +187,7 @@ async function run() {
         })
 
         // patch api update data in usercollection
-        app.patch("/v1/usersRole/:id", async (req, res) => {
+        app.patch("/v1/usersRole/:id",verifyAdmin, async (req, res) => {
 
             const id = req.params.id;
             console.log("surveyorid", id);
