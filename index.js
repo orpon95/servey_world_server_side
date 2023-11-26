@@ -80,9 +80,44 @@ async function run() {
                 next()
             })
             // next()
-            
+
 
         }
+
+        // verify admin
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email
+            const query = { email: email }
+            const user = await UsersCollection.findOne(query)
+            const isAdmin = user?.role === "admin"
+            if (!isAdmin) {
+                return res.status(403).send({ message: "forbidden access" })
+
+            }
+            next()
+        }
+
+
+
+        // admin check
+        app.get("/v1/users/admin/:email", verifytoken, async (req, res) => {
+            // console.log("token in get alluser", req.headers);
+            const email = req.params.email
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ message: "forbidden access" })
+            }
+            const query = { email: email }
+            const user = await UsersCollection.findOne(query)
+            let admin = false
+            if (user) {
+                admin = user.role === "admin"
+            }
+            res.send({ admin })
+            // const cursor = UsersCollection.find()
+            // const result = await cursor.toArray()
+            // res.send(result)
+
+        })
 
         // post api for storing user info
 
@@ -103,7 +138,7 @@ async function run() {
             res.send(result)
         })
         // get api for getting all user info
-        app.get("/v1/users", verifytoken ,  async (req, res) => {
+        app.get("/v1/users", verifytoken,verifyAdmin, async (req, res) => {
             // console.log("token in get alluser", req.headers);
             const cursor = UsersCollection.find()
             const result = await cursor.toArray()
