@@ -3,6 +3,7 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 require('dotenv').config()
+const jwt = require("jsonwebtoken")
 const port = process.env.PORT || 5000;
 
 
@@ -37,6 +38,52 @@ async function run() {
         const UsersCollection = database.collection("Users");
         const usersSurveyInfoCollection = database.collection("usersSurveyInfo");
 
+        // jwt relared api
+        // token api
+        app.post("/api/v1/jwt", async (req, res) => {
+            const user = req.body;
+            console.log(user);
+            // const result = await jobscollection.insertOne(addedjobs)
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h" })
+
+            // res.cookie("token", token, {
+            //     httpOnly: true,
+            //     // secure: true,
+            //     // sameSite: "none",
+            //     secure: process.env.NODE_ENV === 'production',
+            //     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            //     // maxAge: 60 * 60 * 1000
+
+
+            // })
+
+            // .send({ success: true })
+            res.send({ token })
+
+
+        })
+        // verifytoken middelwares
+        const verifytoken = (req, res, next) => {
+            console.log("token in verify", req.headers.authorization);
+            if (!req.headers.authorization) {
+                return res.status(401).send({ message: "forbidden access" })
+
+            }
+            const token = req.headers.authorization.split(" ")[1]
+            console.log("split toke ", token);
+            jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+                if (err) {
+                    return res.status(401).send({ message: "forbidden access" })
+
+                }
+                req.decoded = decoded
+                next()
+            })
+            // next()
+            
+
+        }
+
         // post api for storing user info
 
         app.post("/v1/users", async (req, res) => {
@@ -56,7 +103,8 @@ async function run() {
             res.send(result)
         })
         // get api for getting all user info
-        app.get("/v1/users", async (req, res) => {
+        app.get("/v1/users", verifytoken ,  async (req, res) => {
+            // console.log("token in get alluser", req.headers);
             const cursor = UsersCollection.find()
             const result = await cursor.toArray()
             res.send(result)
@@ -76,15 +124,15 @@ async function run() {
         app.patch("/v1/usersRole/:id", async (req, res) => {
 
             const id = req.params.id;
-            console.log("surveyorid",id);
+            console.log("surveyorid", id);
             const filter = { _id: new ObjectId(id) }
             // const options = {upsert:true}
             const updatedData = req.body
-            console.log("in patch surv",updatedData);
+            console.log("in patch surv", updatedData);
 
             // get
             const existUser = await UsersCollection.findOne(filter)
-            if (existUser.role === "admin" || existUser.role === "surveyor" ) {
+            if (existUser.role === "admin" || existUser.role === "surveyor") {
                 return res.send({ message: "user already exists", modifiedCount: null })
             }
             const setUpdatedData = {
@@ -153,7 +201,7 @@ async function run() {
             const filter = { _id: new ObjectId(id) }
             // const options = {upsert:true}
             const updatedData = req.body
-            console.log("in patch of unpublish",updatedData);
+            console.log("in patch of unpublish", updatedData);
 
             // get
             const existUser = await surveyCollection.findOne(filter)
