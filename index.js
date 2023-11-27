@@ -169,7 +169,7 @@ async function run() {
             res.send(result)
         })
         // get api for getting all user info
-        app.get("/v1/users", verifytoken,verifyAdmin, async (req, res) => {
+        app.get("/v1/users", verifytoken, verifyAdmin, async (req, res) => {
             // console.log("token in get alluser", req.headers);
             const cursor = UsersCollection.find()
             const result = await cursor.toArray()
@@ -178,7 +178,7 @@ async function run() {
         })
 
         // delte api from usercollection
-        app.delete("/v1/users/:id",verifyAdmin, async (req, res) => {
+        app.delete("/v1/users/:id", verifyAdmin, async (req, res) => {
             const id = req.params.id
             console.log("pls delte ", id)
             const query = { _id: new ObjectId(id) }
@@ -187,7 +187,7 @@ async function run() {
         })
 
         // patch api update data in usercollection
-        app.patch("/v1/usersRole/:id",verifyAdmin, async (req, res) => {
+        app.patch("/v1/usersRole/:id", verifyAdmin, async (req, res) => {
 
             const id = req.params.id;
             console.log("surveyorid", id);
@@ -276,8 +276,8 @@ async function run() {
             }
             const setUpdatedData = {
                 $set: {
-                    status: updatedData.status
-                    // feedback: updatedData.feedback,
+                    status: updatedData.status,
+                    feedback: updatedData.feedback,
 
                 }
             }
@@ -287,6 +287,29 @@ async function run() {
             res.send(result)
             // console.log(updatedData);
         })
+
+        // update in suurvey collection
+        app.put("/api/v1/surveyUpdate/:id", async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const options = { upsert: true }
+            const updatedProduct = req.body
+            console.log("inside updated",id, updatedProduct);
+
+            const setUpdatedProduct = {
+                $set: {
+                    title: updatedProduct?.title,
+                    category: updatedProduct?.category,
+                    
+                    short_description: updatedProduct?.short_description,
+                    timestamp: updatedProduct?.timestamp,
+
+                }
+            }
+            const result = await surveyCollection.updateOne(filter, setUpdatedProduct, options)
+            res.send(result)
+        })
+
 
 
 
