@@ -151,6 +151,25 @@ async function run() {
             // res.send(result)
 
         })
+        // pro check
+        app.get("/v1/users/prouser/:email", verifytoken, async (req, res) => {
+            // console.log("token in get alluser", req.headers);
+            const email = req.params.email
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ message: "forbidden access" })
+            }
+            const query = { email: email }
+            const user = await UsersCollection.findOne(query)
+            let Pro_user = false
+            if (user) {
+                Pro_user = user.role === "Pro_user"
+            }
+            res.send({ Pro_user })
+            // const cursor = UsersCollection.find()
+            // const result = await cursor.toArray()
+            // res.send(result)
+
+        })
 
         // post api for storing user info
 
@@ -220,7 +239,7 @@ async function run() {
         //     const email = req.params.email;
         //     console.log("surveyoremail", email);
         //     const filter = { email:email }
-            
+
         //     const updatedData = req.body
         //     console.log("in patch surv", updatedData);
 
@@ -282,7 +301,13 @@ async function run() {
         })
         // get api for getting all data from surveys collection
         app.get("/v1/allSurveys", async (req, res) => {
-            const cursor = surveyCollection.find()
+            console.log("sort valu",req.query.sort);
+            const filter = req.query
+
+            const query = {
+                category: {$regex: filter.sort}
+            }
+            const cursor = surveyCollection.find(query)
             const result = await cursor.toArray()
             res.send(result)
 
@@ -359,15 +384,15 @@ async function run() {
         });
         // apyment end
 
-        // payment history api
-        
+        // payment history api for storing payment info and role update to pro users
+
 
         app.post("/v1/paymentHistory/:email", async (req, res) => {
             const email = req.params.email;
-            const query = {email:email}
-         
+            const query = { email: email }
+
             const payment = req.body;
-            console.log("inside paymenr",payment);
+            console.log("inside paymenr", payment);
             const result = await PaymentHistory.insertOne(payment)
             const setUpdatedData = {
                 $set: {
@@ -375,8 +400,32 @@ async function run() {
                 }
             }
             const Patchresult = await UsersCollection.updateOne(query, setUpdatedData)
-           
-            res.send({result,Patchresult})
+
+            res.send({ result, Patchresult })
+        })
+
+        // patment history get apoi
+
+        app.get("/v2/paymentHistory/:email", verifytoken, async (req, res) => {
+            console.log(" payment email", req.params?.email);
+            let query = {}
+            if (req?.params?.email) {
+                query = { email: req?.params?.email }
+            }
+            const cursor = PaymentHistory.find(query)
+            const result = await cursor.toArray()
+            res.send(result)
+
+        })
+        // patment history get apoi
+
+        app.get("/v2/allpaymentHistory/:email", verifytoken, async (req, res) => {
+            console.log(" allpayment email", req.params?.email);
+            
+            const cursor = PaymentHistory.find()
+            const result = await cursor.toArray()
+            res.send(result)
+
         })
 
 
