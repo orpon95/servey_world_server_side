@@ -3,6 +3,7 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 require('dotenv').config()
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
 const jwt = require("jsonwebtoken")
 const port = process.env.PORT || 5000;
 
@@ -31,12 +32,13 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        client.connect();
+        // client.connect();
         // database creation and collection
         const database = client.db("surveyDB");
         const surveyCollection = database.collection("survey");
         const UsersCollection = database.collection("Users");
         const usersSurveyInfoCollection = database.collection("usersSurveyInfo");
+        const PaymentHistory = database.collection("PaymentHistory");
 
         // jwt relared api
         // token api
@@ -212,6 +214,32 @@ async function run() {
             res.send(result)
             // console.log(updatedData);
         })
+        // patch api update data for pro user in usercollection
+        // app.patch("/v2/usersRole/:email", verifyAdmin, async (req, res) => {
+
+        //     const email = req.params.email;
+        //     console.log("surveyoremail", email);
+        //     const filter = { email:email }
+            
+        //     const updatedData = req.body
+        //     console.log("in patch surv", updatedData);
+
+        //     // get
+        //     const existUser = await UsersCollection.findOne(filter)
+        //     if (existUser.role === "admin" || existUser.role === "surveyor" || existUser.role === "pro") {
+        //         return res.send({ message: "user already exists", modifiedCount: null })
+        //     }
+        //     const setUpdatedData = {
+        //         $set: {
+        //             role: updatedData.role
+        //         }
+        //     }
+
+
+        //     const result = await UsersCollection.updateOne(filter, setUpdatedData)
+        //     res.send(result)
+        //     // console.log(updatedData);
+        // })
         // post api storing users survey info
 
         app.post("/v1/usersSurveyInfo", async (req, res) => {
@@ -294,13 +322,13 @@ async function run() {
             const filter = { _id: new ObjectId(id) }
             const options = { upsert: true }
             const updatedProduct = req.body
-            console.log("inside updated",id, updatedProduct);
+            console.log("inside updated", id, updatedProduct);
 
             const setUpdatedProduct = {
                 $set: {
                     title: updatedProduct?.title,
                     category: updatedProduct?.category,
-                    
+
                     short_description: updatedProduct?.short_description,
                     timestamp: updatedProduct?.timestamp,
 
@@ -310,11 +338,53 @@ async function run() {
             res.send(result)
         })
 
+        // payment api
+        app.post("/create-payment-intent", async (req, res) => {
+            const { price } = req.body;
+            const amount = parseInt(price * 100)
+            console.log(amount);
+
+            // Create a PaymentIntent with the order amount and currency
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+                payment_method_types: [
+                    "card"
+                ]
+            });
+
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        });
+        // apyment end
+
+        // payment history api
+        
+
+        app.post("/v1/paymentHistory/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = {email:email}
+         
+            const payment = req.body;
+            console.log("inside paymenr",payment);
+            const result = await PaymentHistory.insertOne(payment)
+            const setUpdatedData = {
+                $set: {
+                    role: "Pro_user"
+                }
+            }
+            const Patchresult = await UsersCollection.updateOne(query, setUpdatedData)
+           
+            res.send({result,Patchresult})
+        })
+
+
 
 
 
         // Send a ping to confirm a successful connection
-        client.db("admin").command({ ping: 1 });
+        // client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
