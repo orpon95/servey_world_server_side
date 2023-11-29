@@ -192,7 +192,18 @@ async function run() {
         // get api for getting all user info
         app.get("/v1/users", verifytoken, verifyAdmin, async (req, res) => {
             // console.log("token in get alluser", req.headers);
-            const cursor = UsersCollection.find()
+            // console.log("user sort valu",req.query.sort)
+            const filter = req.query
+            let query = {}
+            if (req.query.sort) {
+                query = {
+                    role: { $regex: filter.sort }
+                }
+
+            }
+
+
+            const cursor = UsersCollection.find(query)
             const result = await cursor.toArray()
             res.send(result)
 
@@ -301,12 +312,17 @@ async function run() {
         })
         // get api for getting all data from surveys collection
         app.get("/v1/allSurveys", async (req, res) => {
-            console.log("sort valu",req.query.sort);
+            console.log("sort valu", req.query.sort);
             const filter = req.query
+            let query = {}
+            if (req.query.sort) {
+                query = {
+                    category: { $regex: filter.sort }
+                }
 
-            const query = {
-                category: {$regex: filter.sort}
             }
+
+
             const cursor = surveyCollection.find(query)
             const result = await cursor.toArray()
             res.send(result)
@@ -421,7 +437,7 @@ async function run() {
 
         app.get("/v2/allpaymentHistory/:email", verifytoken, async (req, res) => {
             console.log(" allpayment email", req.params?.email);
-            
+
             const cursor = PaymentHistory.find()
             const result = await cursor.toArray()
             res.send(result)
