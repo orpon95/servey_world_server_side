@@ -210,7 +210,8 @@ async function run() {
         })
 
         // delte api from usercollection
-        app.delete("/v1/users/:id", verifyAdmin, async (req, res) => {
+        // added veryfy token
+        app.delete("/v1/users/:id",verifytoken, verifyAdmin, async (req, res) => {
             const id = req.params.id
             console.log("pls delte ", id)
             const query = { _id: new ObjectId(id) }
@@ -219,7 +220,8 @@ async function run() {
         })
 
         // patch api update data in usercollection
-        app.patch("/v1/usersRole/:id", verifyAdmin, async (req, res) => {
+        // admin , token
+        app.patch("/v1/usersRole/:id", verifytoken, verifyAdmin, async (req, res) => {
 
             const id = req.params.id;
             console.log("surveyorid", id);
@@ -289,7 +291,8 @@ async function run() {
         })
 
         // get api for getting all data from usersurveysinfo collection
-        app.get("/v1/usersSurveyInfo", async (req, res) => {
+        // added veryfy token and admin
+        app.get("/v1/usersSurveyInfo",verifytoken, async (req, res) => {
             const cursor = usersSurveyInfoCollection.find()
             const result = await cursor.toArray()
             res.send(result)
@@ -303,7 +306,7 @@ async function run() {
 
         // post api for suveys
 
-        app.post("/v1/surveys", async (req, res) => {
+        app.post("/v1/surveys",verifytoken, async (req, res) => {
             const surveys = req.body;
             console.log(surveys);
             const result = await surveyCollection.insertOne(surveys)
@@ -329,7 +332,8 @@ async function run() {
 
         })
         // pathch in survey coollection for unpulish user
-        app.patch("/v1/unpublishSurvey/:id", async (req, res) => {
+        // verify toke , admin
+        app.patch("/v1/unpublishSurvey/:id",verifytoken,verifyAdmin, async (req, res) => {
 
             const id = req.params.id;
             console.log(id);
@@ -434,8 +438,9 @@ async function run() {
 
         })
         // patment history get apoi
+        // admin ,token
 
-        app.get("/v2/allpaymentHistory/:email", verifytoken, async (req, res) => {
+        app.get("/v2/allpaymentHistory/:email", verifytoken,verifyAdmin, async (req, res) => {
             console.log(" allpayment email", req.params?.email);
 
             const cursor = PaymentHistory.find()
